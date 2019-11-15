@@ -7,14 +7,21 @@ def GetLambdaArr(hdr):
     # hdl: FITS hdl
     
     #npix = hdl[0].data.shape[0]
-    dispax = hdr['DISPAXIS']
+    if 'DISPAXIS' in hdr:
+        dispax = hdr['DISPAXIS']
+    else:
+        dispax = 3
+        
     npix = hdr['NAXIS'+str(dispax)]
     pixarr = np.array(range(npix), dtype=np.int) + 1
     lam = Pix2Wav(pixarr, hdr)
     return lam
     
 def Pix2Wav(pix, hdr):
-    dispax = hdr['DISPAXIS']
+    if 'DISPAXIS' in hdr:
+        dispax = hdr['DISPAXIS']
+    else:
+        dispax = 3
     crval = hdr['CRVAL'+str(dispax)]
     crpix = hdr['CRPIX'+str(dispax)]
     cdelt_key = 'CD'+str(dispax)+'_'+str(dispax)
@@ -30,7 +37,10 @@ def Pix2Wav(pix, hdr):
 def Wav2Pix(w, hdr):
     # w: wavelength (A)
     
-    dispax = hdr['DISPAXIS']
+    if 'DISPAXIS' in hdr:
+        dispax = hdr['DISPAXIS']
+    else:
+        dispax = 3
     crval = hdr['CRVAL'+str(dispax)]
     crpix = hdr['CRPIX'+str(dispax)]
     cdelt_key = 'CD'+str(dispax)+'_'+str(dispax)

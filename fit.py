@@ -112,14 +112,12 @@ def specplot(data, titleline, message_switch, message):
 
 
 def fitting(fnames, area, dbname, outdbfname, without_plot, sample_range, 
-            without_fit, method, absolute_sigma=False):
+            without_fit, method, en, absolute_sigma=False):
 
     titleline = ''
     for fname in fnames:
         titleline += fname
         
-    print(fnames)
-    
     global key
     key = 'n'
     while key == 'n':
@@ -130,10 +128,10 @@ def fitting(fnames, area, dbname, outdbfname, without_plot, sample_range,
         # Selecting the data within the sample rages
         
         if sample_range != "*":
-            datatmp = GetData(fnames[0], area)
+            datatmp = GetData(fnames[0], area, en)
             if len(fnames) > 1:
                 for fname in fnames[1:]:
-                    datatmp3 = GetData(fname, area)
+                    datatmp3 = GetData(fname, area, en)
                     datatmp = np.vstack((datatmp, datatmp3))
             wrangetmp = sample_range.split(",")
             wrange = []
@@ -147,13 +145,15 @@ def fitting(fnames, area, dbname, outdbfname, without_plot, sample_range,
                         datatmp2.append([datatmp[j][0],datatmp[j][1]])
             data = np.array(datatmp2)
         else:
-            data = GetData(fnames[0], area)
+            data = GetData(fnames[0], area, en)
             if len(fnames) > 1:
                 for fname in fnames[1:]:
-                    datatmp3 = GetData(fname, area)
+                    datatmp3 = GetData(fname, area, en)
                     data = np.vstack((data, datatmp3))
             
-        print(data.shape)
+        #plt.plot(data[:,0], data[:,1])
+        #plt.show()
+        
         if without_fit == False:
             # Scaling the data
             scale = np.average(data[:,1])
@@ -247,7 +247,7 @@ def fitting(fnames, area, dbname, outdbfname, without_plot, sample_range,
             db.params = func.scale(scale, db.component_num, db.funcinfo, db.params)
 
         else:
-            data=datatmp
+            #data=datatmp
             scale=1.0
             for i in range(db.component_num):
                 for j in range(db.funcinfo[i][1]):
@@ -272,14 +272,15 @@ def fitting(fnames, area, dbname, outdbfname, without_plot, sample_range,
 
     return
 
-def GetData(fname, area):
+def GetData(fname, area, en):
     # Creating a data array including wavelength and intensity.
     # fname: Input FITS file name
     # area: Spatial area (string like x1,x2,y1,y2)
+    # en: Extension number of data used for ftting.
 
     hdl = fits.open(fname)
-    lam = ft.GetLambdaArr(hdl[0].header)
-    intensities = hdl[0].data
+    lam = ft.GetLambdaArr(hdl[en].header)
+    intensities = hdl[en].data
 
     # Creating array of 1D intensity data
     a = [int(s) for s in area.split(',')]
@@ -314,9 +315,9 @@ if __name__ == '__main__' :
                         choices=['lm', 'trf', 'dogbox'],
                         help='Algorithm to perform minimization. Default:trf',
                         default='trf')
+    parser.add_argument('-en', type=int, help='Extension number. Default:0')
 
     args = parser.parse_args()
-    print(args.sample_range)
 
     # Set the matplotlib figure saving directory to the current directory.
     plt.rcParams['savefig.directory'] = os.getcwd()
@@ -324,7 +325,6 @@ if __name__ == '__main__' :
     print('')
     fitting(args.fnames.split(','), args.area, args.dbfname, args.outfname,
             args.without_plot,
-            args.sample_range, args.without_fit, args.method)
-    #GetData(args.fname, args.area, args.sample_range)
+            args.sample_range, args.without_fit, args.method, args.en)
     print('')
 
